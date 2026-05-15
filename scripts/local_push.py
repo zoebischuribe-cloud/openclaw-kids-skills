@@ -156,7 +156,8 @@ def generate_guguwen(output_path: Path) -> dict:
     """生成每日小古文内容。返回 {"text": 文案, "images": [路径列表]}。"""
     # 先运行 generate.py 记录历史
     subprocess.run(
-        [sys.executable, str(GUGUWEN_SCRIPT), "--index", str(GUGUWEN_INDEX), "--day", "today", "-o", str(output_path)],
+        [sys.executable, str(GUGUWEN_SCRIPT), "--index", str(GUGUWEN_INDEX),
+         "--day", "today", "--base-date", "2026-05-15", "-o", str(output_path)],
         check=True,
         cwd=str(REPO_ROOT),
     )

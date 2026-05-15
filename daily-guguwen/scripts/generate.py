@@ -23,19 +23,21 @@ def load_index(index_path: Path) -> list[dict]:
         return json.load(f)
 
 
-def select_by_day(index: list[dict], year: int | None = None, month: int | None = None, day: int | None = None) -> dict:
-    """按一年中的第几天循环选择。"""
+def select_by_day(index: list[dict], year: int | None = None, month: int | None = None, day: int | None = None, base_date: datetime | None = None) -> dict:
+    """按天数循环选择。base_date 指定后，从该日期起每天顺序播放。"""
     now = datetime.now()
     y = year or now.year
     m = month or now.month
     d = day or now.day
-
-    # 计算这是今年的第几天
     target = datetime(y, m, d)
-    day_of_year = target.timetuple().tm_yday
 
-    # 用天数对总数取模，循环播放
-    idx = (day_of_year - 1) % len(index)
+    if base_date:
+        delta = (target - base_date).days
+        idx = delta % len(index)
+    else:
+        # 兼容旧逻辑：按一年中的第几天
+        day_of_year = target.timetuple().tm_yday
+        idx = (day_of_year - 1) % len(index)
     return index[idx]
 
 
@@ -152,6 +154,7 @@ def main():
     parser.add_argument("--history", default=".history.json", help="历史记录文件")
     parser.add_argument("--grade", default="elementary", choices=["elementary", "junior_high"],
                         help="目标年级")
+    parser.add_argument("--base-date", help="基准日期 YYYY-MM-DD，从该日期起第1天开始顺序播放")
     args = parser.parse_args()
 
     index_path = Path(args.index).expanduser().resolve()
@@ -179,7 +182,14 @@ def main():
         offset = {"today": 0, "yesterday": -1, "tomorrow": 1}[args.day]
         now = datetime.now()
         target = datetime.fromordinal(now.toordinal() + offset)
-        entry = select_by_day(index, target.year, target.month, target.day)
+        base_date = None
+        if args.base_date:
+            try:
+                base_date = datetime.strptime(args.base_date, "%Y-%m-%d")
+            except ValueError:
+                print(f"错误: --base-date 格式应为 YYYY-MM-DD，例如 2026-05-15")
+                sys.exit(1)
+        entry = select_by_day(index, target.year, target.month, target.day, base_date)
 
     # 生成
     output = generate_push(entry, args.grade)
