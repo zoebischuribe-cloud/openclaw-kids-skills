@@ -1,0 +1,110 @@
+name: Daily Education Push
+
+on:
+  schedule:
+    # UTC 22:30 = 北京时间 06:30 (次日)
+    - cron: '30 22 * * *'
+    # UTC 13:00 = 北京时间 21:00
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      push_type:
+        description: '推送类型 (morning=科普, evening=古文)'
+        required: true
+        default: 'morning'
+        type: choice
+        options:
+          - morning
+          - evening
+
+jobs:
+  # ========== 早上 6:30：每日科普 ==========
+  morning-science:
+    if: |
+      github.event.schedule == '30 22 * * *' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.push_type == 'morning')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml requests
+
+      - name: Generate daily science push
+        run: |
+          python daily-science-kids/scripts/generate.py \
+            --grade elementary \
+            -o output.md
+
+      - name: Push to webhook
+        if: env.WEBHOOK_URL != ''
+        run: |
+          DAY_OF_YEAR=$(date +%j)
+          TITLE="📚 每日科普 · 第${DAY_OF_YEAR}天"
+          python scripts/push.py \
+            --webhook "$WEBHOOK_URL" \
+            --type "${WEBHOOK_TYPE:-wechat}" \
+            --title "$TITLE" \
+            --content-file output.md
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_TYPE: ${{ secrets.WEBHOOK_TYPE }}
+
+      - name: Upload output artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: morning-science-${{ github.run_id }}
+          path: output.md
+          retention-days: 7
+
+  # ========== 晚上 9:00：每日小古文 ==========
+  evening-guguwen:
+    if: |
+      github.event.schedule == '0 13 * * *' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.push_type == 'evening')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate daily guguwen push
+        run: |
+          python daily-guguwen/scripts/generate.py \
+            --index daily-guguwen/index.json \
+            --day today \
+            -o output.md
+
+      - name: Push to webhook
+        if: env.WEBHOOK_URL != ''
+        run: |
+          DAY_OF_YEAR=$(date +%j)
+          TITLE="📜 每日小古文 · 第${DAY_OF_YEAR}天"
+          python scripts/push.py \
+            --webhook "$WEBHOOK_URL" \
+            --type "${WEBHOOK_TYPE:-wechat}" \
+            --title "$TITLE" \
+            --content-file output.md
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_TYPE: ${{ secrets.WEBHOOK_TYPE }}
+
+      - name: Upload output artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evening-guguwen-${{ github.run_id }}
+          path: output.md
+          retention-days: 7
