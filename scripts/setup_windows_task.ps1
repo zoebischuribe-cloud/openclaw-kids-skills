@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     一键创建 Windows 计划任务，实现每日本地自动推送。
@@ -76,16 +76,16 @@ foreach ($name in $taskNames) {
 }
 
 # ---------- 创建任务 ----------
+$ArgMorning = "`"" + $ScriptPath + "`" morning --webhook `"" + $WebhookUrl + "`" --type `"" + $WebhookType + "`""
+$ArgEvening = "`"" + $ScriptPath + "`" evening --webhook `"" + $WebhookUrl + "`" --type `"" + $WebhookType + "`""
+
 $ActionMorning = New-ScheduledTaskAction -Execute $PythonPath `
-    -Argument "`"$ScriptPath`" morning" `
+    -Argument $ArgMorning `
     -WorkingDirectory $RepoRoot
 
 $ActionEvening = New-ScheduledTaskAction -Execute $PythonPath `
-    -Argument "`"$ScriptPath`" evening" `
+    -Argument $ArgEvening `
     -WorkingDirectory $RepoRoot
-
-# 环境变量（WEBHOOK_URL + WEBHOOK_TYPE）
-$envString = "WEBHOOK_URL=$WebhookUrl;WEBHOOK_TYPE=$WebhookType"
 
 # 触发器：每天 06:30 和 21:00
 $TriggerMorning = New-ScheduledTaskTrigger -Daily -At "06:30"
