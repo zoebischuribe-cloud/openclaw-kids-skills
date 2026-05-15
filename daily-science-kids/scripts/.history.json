@@ -12,5 +12,33 @@
     "category": "news",
     "grade": "junior_high",
     "time": "2026-05-15T11:40:13.743299"
+  },
+  {
+    "id": "news_007",
+    "title": "为什么赤道附近很热两极很冷",
+    "category": "news",
+    "grade": "elementary",
+    "time": "2026-05-15T13:14:19.527993"
+  },
+  {
+    "id": "news_005",
+    "title": "为什么南极没人住北极有人住",
+    "category": "news",
+    "grade": "elementary",
+    "time": "2026-05-15T13:14:24.775394"
+  },
+  {
+    "id": "news_008",
+    "title": "为什么中英建交这么重要",
+    "category": "news",
+    "grade": "elementary",
+    "time": "2026-05-15T14:00:09.093502"
+  },
+  {
+    "id": "news_003",
+    "title": "联合国是干什么的",
+    "category": "news",
+    "grade": "elementary",
+    "time": "2026-05-15T14:07:54.430189"
   }
 ]
